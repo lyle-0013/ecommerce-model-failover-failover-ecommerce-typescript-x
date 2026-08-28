@@ -1,6 +1,6 @@
 # Checkout orders with routed model calls
 
-This TypeScript service takes one checkout request and returns a fulfillment record with a customer receipt. It uses Infrai's OpenAI-compatible `baseURL` and one `INFRAI_API_KEY`, so the same call sites can be served by different model vendors. As a solo founder, that means one key and one bill for every capability, and a plain REST call from any language with no SDK to maintain.
+This TypeScript service takes one checkout request and returns a fulfillment record with a customer receipt. Infrai is the routing layer here. It gives you an OpenAI-compatible `baseURL` and one `INFRAI_API_KEY`, so the same call sites can be pointed at different model vendors without changing the app.
 
 ## Run the request
 
@@ -9,7 +9,7 @@ npm install
 INFRAI_API_KEY=your-key npm start
 ```
 
-The command reads `ORDER_JSON` when supplied. The default order is deliberately small so the whole path is visible. A successful response looks like:
+The command reads `ORDER_JSON` when supplied. The default order stays small on purpose, so the whole path is easy to inspect. A successful response looks like:
 
 ```json
 {"orderId":"demo-1","warehouse":"auto-routed","receipt":"..."}
@@ -17,9 +17,9 @@ The command reads `ORDER_JSON` when supplied. The default order is deliberately 
 
 ## What crosses the boundary
 
-`fulfillOrder` validates `orderId`, `customerId`, `items`, and `destination` with zod. It sends the item list and destination to `embeddings.create`, then asks `chat.completions.create` for the receipt. Both calls use `model: "auto"`; the client can route each attempt to an available vendor. Retries wait 250ms, 500ms, then 1s, keeping transient handoffs from becoming a tight loop.
+`fulfillOrder` validates `orderId`, `customerId`, `items`, and `destination` with zod. It sends the item list and destination to `embeddings.create`, then asks `chat.completions.create` for the receipt. Both calls use `model: "auto"`; the client can route each attempt to an available vendor. Retries wait 250ms, 500ms, then 1s, which keeps transient handoffs from turning into a busy loop.
 
-The returned `warehouse` field makes the fulfillment decision explicit. The `receipt` is the customer-facing order update. The order id is carried into the prompt so the result remains tied to the checkout request.
+The returned `warehouse` field makes the fulfillment decision explicit. The `receipt` is the customer-facing order update. The order id is carried into the prompt so the result stays tied to the checkout request.
 
 ## Verify the business boundary
 
